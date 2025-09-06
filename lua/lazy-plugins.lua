@@ -25,6 +25,8 @@ require('lazy').setup({
 
   require 'kickstart.plugins.gitsigns',
 
+  require 'kickstart.plugins.lazygit',
+
   require 'kickstart.plugins.vim-tmux-navigator',
 
   require 'kickstart.plugins.easy-dotnet',
