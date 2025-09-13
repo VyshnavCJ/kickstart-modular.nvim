@@ -35,7 +35,7 @@ require('lazy').setup({
 
   require 'kickstart.plugins.vim-tmux-navigator',
 
-  require 'kickstart.plugins.easy-dotnet',
+  -- require 'kickstart.plugins.easy-dotnet',
 
   require 'kickstart.plugins.which-key',
 
