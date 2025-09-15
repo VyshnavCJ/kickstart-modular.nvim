@@ -37,6 +37,8 @@ require('lazy').setup({
 
   require 'kickstart.plugins.snippets',
 
+  require 'kickstart.plugins.debug-inline',
+
   require 'kickstart.plugins.vimobession',
 
   require 'kickstart.plugins.lazygit',
