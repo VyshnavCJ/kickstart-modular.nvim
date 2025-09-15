@@ -145,4 +145,52 @@ return {
       },
     }
   end,
+  opts = function()
+    local dap = require 'dap'
+    if not dap.adapters['netcoredbg'] then
+      require('dap').adapters['netcoredbg'] = {
+        type = 'executable',
+        command = vim.fn.exepath 'netcoredbg',
+        args = { '--interpreter=vscode' },
+        options = {
+          detached = false,
+        },
+      }
+    end
+    for _, lang in ipairs { 'cs', 'fsharp', 'vb' } do
+      if not dap.configurations[lang] then
+        dap.configurations[lang] = {
+          {
+            type = 'netcoredbg',
+            name = 'Launch file',
+            request = 'launch',
+            ---@diagnostic disable-next-line: redundant-parameter
+            program = function()
+              vim.cmd 'w'
+              vim.cmd '!dotnet build'
+
+              local cwd = vim.fn.getcwd()
+              local dll_name = cwd:match '([^/]+)$' .. '.dll'
+
+              -- Read csproj file
+              local csproj = vim.fn.glob(cwd .. '/*.csproj')
+              local framework = 'net8.0' -- default fallback
+              if csproj ~= '' then
+                for line in io.lines(csproj) do
+                  local tf = line:match '<TargetFramework>(.*)</TargetFramework>'
+                  if tf then
+                    framework = tf
+                    break
+                  end
+                end
+              end
+
+              return cwd .. '/bin/Debug/' .. framework .. '/' .. dll_name
+            end,
+            cwd = '${workspaceFolder}',
+          },
+        }
+      end
+    end
+  end,
 }
