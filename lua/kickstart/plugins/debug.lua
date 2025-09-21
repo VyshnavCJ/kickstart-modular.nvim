@@ -176,25 +176,35 @@ return {
               vim.cmd 'w'
               vim.cmd '!dotnet build'
 
-              local cwd = vim.fn.getcwd()
-              local dll_name = cwd:match '([^/]+)$' .. '.dll'
+              -- Get current file path
+              local file = vim.fn.expand '%:p'
+              local dir = vim.fn.fnamemodify(file, ':h')
+
+              -- Find nearest .csproj
+              local csproj = ''
+              while dir ~= '' and dir ~= '/' do
+                local matches = vim.fn.globpath(dir, '*.csproj', false, true)
+                if #matches > 0 then
+                  csproj = matches[1]
+                  break
+                end
+                dir = vim.fn.fnamemodify(dir, ':h')
+              end
+              local proj_dir = vim.fn.fnamemodify(csproj, ':h')
+              local dll_name = vim.fn.fnamemodify(csproj, ':t:r') .. '.dll'
 
               -- Read csproj file
-              local csproj = vim.fn.glob(cwd .. '/*.csproj')
               local framework = 'net8.0' -- default fallback
-              if csproj ~= '' then
-                for line in io.lines(csproj) do
-                  local tf = line:match '<TargetFramework>(.*)</TargetFramework>'
-                  if tf then
-                    framework = tf
-                    break
-                  end
+              for line in io.lines(csproj) do
+                local tf = line:match '<TargetFramework>(.*)</TargetFramework>'
+                if tf then
+                  framework = tf
+                  break
                 end
               end
 
-              return cwd .. '/bin/Debug/' .. framework .. '/' .. dll_name
+              return proj_dir .. '/bin/Debug/' .. framework .. '/' .. dll_name
             end,
-            cwd = '${workspaceFolder}',
           },
         }
       end
