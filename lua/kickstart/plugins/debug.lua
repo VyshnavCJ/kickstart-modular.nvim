@@ -171,6 +171,7 @@ return {
             type = 'netcoredbg',
             name = 'Launch file',
             request = 'launch',
+            console = 'integratedTerminal',
             ---@diagnostic disable-next-line: redundant-parameter
             program = function()
               vim.cmd 'wa'
