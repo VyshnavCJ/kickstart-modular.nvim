@@ -173,7 +173,7 @@ return {
             request = 'launch',
             ---@diagnostic disable-next-line: redundant-parameter
             program = function()
-              vim.cmd 'w'
+              vim.cmd 'wa'
               vim.cmd '!dotnet build'
 
               -- Get current file path
