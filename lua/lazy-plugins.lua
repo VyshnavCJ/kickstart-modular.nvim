@@ -17,7 +17,7 @@ require('lazy').setup({
   -- include a plugin definition from file lua/path/name.lua
 
   -- require 'kickstart.plugins.gitsigns',
-  
+
   require 'kickstart.plugins.trouble',
 
   require 'kickstart.plugins.neotest',
@@ -37,8 +37,6 @@ require('lazy').setup({
   require 'kickstart.plugins.lazygit',
 
   require 'kickstart.plugins.vim-tmux-navigator',
-
-  require 'kickstart.plugins.codeium',
 
   require 'kickstart.plugins.which-key',
 
@@ -66,7 +64,7 @@ require('lazy').setup({
 
   require 'kickstart.plugins.autopairs',
 
-  require 'kickstart.plugins.neo-tree',
+  require 'kickstart.plugins.oil',
 
   require 'kickstart.plugins.undotree',
 
