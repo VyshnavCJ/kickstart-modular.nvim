@@ -6,8 +6,6 @@
 -- be extended to other languages as well. That's why it's called
 -- kickstart.nvim and not kitchen-sink.nvim ;)
 
----@module 'lazy'
----@type LazySpec
 return {
   -- NOTE: Yes, you can install new plugins here!
   'mfussenegger/nvim-dap',
@@ -28,14 +26,47 @@ return {
   },
   keys = {
     -- Basic debugging keymaps, feel free to change to your liking!
-    { '<F5>', function() require('dap').continue() end, desc = 'Debug: Start/Continue' },
-    { '<F1>', function() require('dap').step_into() end, desc = 'Debug: Step Into' },
-    { '<F2>', function() require('dap').step_over() end, desc = 'Debug: Step Over' },
-    { '<F3>', function() require('dap').step_out() end, desc = 'Debug: Step Out' },
-    { '<leader>b', function() require('dap').toggle_breakpoint() end, desc = 'Debug: Toggle Breakpoint' },
-    { '<leader>B', function() require('dap').set_breakpoint(vim.fn.input 'Breakpoint condition: ') end, desc = 'Debug: Set Breakpoint' },
+    {
+      '<F5>',
+      function() require('dap').continue() end,
+      desc = 'Debug: Start/Continue',
+    },
+    {
+      '<F1>',
+      function() require('dap').step_into() end,
+      desc = 'Debug: Step Into',
+    },
+    {
+      '<F2>',
+      function() require('dap').step_over() end,
+      desc = 'Debug: Step Over',
+    },
+    {
+      '<F3>',
+      function() require('dap').step_out() end,
+      desc = 'Debug: Step Out',
+    },
+    {
+      '<F4>',
+      function() require('dap').terminate() end,
+      desc = 'Debug: Terminate',
+    },
+    {
+      '<leader>b',
+      function() require('dap').toggle_breakpoint() end,
+      desc = 'Debug: Toggle Breakpoint',
+    },
+    {
+      '<leader>B',
+      function() require('dap').set_breakpoint(vim.fn.input 'Breakpoint condition: ') end,
+      desc = 'Debug: Set Breakpoint',
+    },
     -- Toggle to see last session result. Without this, you can't see session output in case of unhandled exception.
-    { '<F7>', function() require('dapui').toggle() end, desc = 'Debug: See last session result.' },
+    {
+      '<F7>',
+      function() require('dapui').toggle() end,
+      desc = 'Debug: See last session result.',
+    },
   },
   config = function()
     local dap = require 'dap'
@@ -60,13 +91,11 @@ return {
 
     -- Dap UI setup
     -- For more information, see |:help nvim-dap-ui|
-    ---@diagnostic disable-next-line: missing-fields
     dapui.setup {
       -- Set icons to characters that are more likely to work in every terminal.
       --    Feel free to remove or use ones that you like more! :)
       --    Don't feel like these are good choices.
       icons = { expanded = '▾', collapsed = '▸', current_frame = '*' },
-      ---@diagnostic disable-next-line: missing-fields
       controls = {
         icons = {
           pause = '⏸',
@@ -83,16 +112,16 @@ return {
     }
 
     -- Change breakpoint icons
-    -- vim.api.nvim_set_hl(0, 'DapBreak', { fg = '#e51400' })
-    -- vim.api.nvim_set_hl(0, 'DapStop', { fg = '#ffcc00' })
-    -- local breakpoint_icons = vim.g.have_nerd_font
-    --     and { Breakpoint = '', BreakpointCondition = '', BreakpointRejected = '', LogPoint = '', Stopped = '' }
-    --   or { Breakpoint = '●', BreakpointCondition = '⊜', BreakpointRejected = '⊘', LogPoint = '◆', Stopped = '⭔' }
-    -- for type, icon in pairs(breakpoint_icons) do
-    --   local tp = 'Dap' .. type
-    --   local hl = (type == 'Stopped') and 'DapStop' or 'DapBreak'
-    --   vim.fn.sign_define(tp, { text = icon, texthl = hl, numhl = hl })
-    -- end
+    vim.api.nvim_set_hl(0, 'DapBreak', { fg = '#e51400' })
+    vim.api.nvim_set_hl(0, 'DapStop', { fg = '#ffcc00' })
+    local breakpoint_icons = vim.g.have_nerd_font
+        and { Breakpoint = '', BreakpointCondition = '', BreakpointRejected = '', LogPoint = '', Stopped = '' }
+      or { Breakpoint = '●', BreakpointCondition = '⊜', BreakpointRejected = '⊘', LogPoint = '◆', Stopped = '⭔' }
+    for type, icon in pairs(breakpoint_icons) do
+      local tp = 'Dap' .. type
+      local hl = (type == 'Stopped') and 'DapStop' or 'DapBreak'
+      vim.fn.sign_define(tp, { text = icon, texthl = hl, numhl = hl })
+    end
 
     dap.listeners.after.event_initialized['dapui_config'] = dapui.open
     dap.listeners.before.event_terminated['dapui_config'] = dapui.close
@@ -106,5 +135,64 @@ return {
         detached = vim.fn.has 'win32' == 0,
       },
     }
+  end,
+  opts = function()
+    local dap = require 'dap'
+    if not dap.adapters['netcoredbg'] then
+      require('dap').adapters['netcoredbg'] = {
+        type = 'executable',
+        command = vim.fn.exepath 'netcoredbg',
+        args = { '--interpreter=vscode' },
+        options = {
+          detached = false,
+        },
+      }
+    end
+    for _, lang in ipairs { 'cs', 'fsharp', 'vb' } do
+      if not dap.configurations[lang] then
+        dap.configurations[lang] = {
+          {
+            type = 'netcoredbg',
+            name = 'Launch file',
+            request = 'launch',
+            console = 'integratedTerminal',
+            ---@diagnostic disable-next-line: redundant-parameter
+            program = function()
+              vim.cmd 'wa'
+              vim.cmd '!dotnet build'
+
+              -- Get current file path
+              local file = vim.fn.expand '%:p'
+              local dir = vim.fn.fnamemodify(file, ':h')
+
+              -- Find nearest .csproj
+              local csproj = ''
+              while dir ~= '' and dir ~= '/' do
+                local matches = vim.fn.globpath(dir, '*.csproj', false, true)
+                if #matches > 0 then
+                  csproj = matches[1]
+                  break
+                end
+                dir = vim.fn.fnamemodify(dir, ':h')
+              end
+              local proj_dir = vim.fn.fnamemodify(csproj, ':h')
+              local dll_name = vim.fn.fnamemodify(csproj, ':t:r') .. '.dll'
+
+              -- Read csproj file
+              local framework = 'net8.0' -- default fallback
+              for line in io.lines(csproj) do
+                local tf = line:match '<TargetFramework>(.*)</TargetFramework>'
+                if tf then
+                  framework = tf
+                  break
+                end
+              end
+
+              return proj_dir .. '/bin/Debug/' .. framework .. '/' .. dll_name
+            end,
+          },
+        }
+      end
+    end
   end,
 }
