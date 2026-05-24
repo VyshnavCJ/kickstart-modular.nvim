@@ -18,6 +18,12 @@ require('lazy').setup({
 
   require 'kickstart.plugins.gitsigns',
 
+  require 'kickstart.plugins.sidekick',
+
+  require 'kickstart.plugins.neocodium',
+
+  require 'kickstart.plugins.tresitter-textobject',
+
   require 'kickstart.plugins.trouble',
 
   require 'kickstart.plugins.neotest',

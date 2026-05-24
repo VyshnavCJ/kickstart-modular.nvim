@@ -6,7 +6,6 @@ return {
     event = 'VimEnter',
     version = '1.*',
     dependencies = {
-      'Exafunction/codeium.nvim',
       'saghen/blink.compat',
       -- Snippet Engine
       {
@@ -81,7 +80,6 @@ return {
           lazydev = { module = 'lazydev.integrations.blink', score_offset = 100 },
         },
       },
-
       snippets = { preset = 'luasnip' },
 
       -- Blink.cmp includes an optional, recommended rust fuzzy matcher,
