@@ -86,6 +86,7 @@ return {
       ensure_installed = {
         -- Update this to ensure that you have the debuggers for the langs you want
         'delve',
+        'netcoredbg',
       },
     }
 
@@ -138,57 +139,101 @@ return {
   end,
   opts = function()
     local dap = require 'dap'
+
+    local function get_netcoredbg_path()
+      local path = vim.fn.exepath 'netcoredbg'
+      if path and path ~= '' then
+        return path
+      end
+
+      local mason_path = vim.fn.stdpath 'data' .. '/mason/packages/netcoredbg/netcoredbg'
+      if vim.fn.filereadable(mason_path) == 1 then
+        return mason_path
+      end
+
+      return 'netcoredbg'
+    end
+
+    local function find_project()
+      local file = vim.fn.expand '%:p'
+      local dir = vim.fn.fnamemodify(file, ':h')
+
+      while dir ~= '' and dir ~= '/' do
+        local matches = vim.fn.globpath(dir, '*.csproj', false, true)
+        if #matches > 0 then
+          local csproj = matches[1]
+          local proj_dir = vim.fn.fnamemodify(csproj, ':h')
+          local dll_name = vim.fn.fnamemodify(csproj, ':t:r') .. '.dll'
+          local framework = 'net8.0'
+
+          local fh = io.open(csproj, 'r')
+          if fh then
+            for line in fh:lines() do
+              local tf = line:match '<TargetFramework>(.*)</TargetFramework>'
+              if tf then
+                framework = tf
+                break
+              end
+
+              local tfs = line:match '<TargetFrameworks>(.-)</TargetFrameworks>'
+              if tfs then
+                framework = vim.split(tfs, ';')[1]
+                break
+              end
+            end
+            fh:close()
+          end
+
+          return {
+            csproj = csproj,
+            proj_dir = proj_dir,
+            dll = proj_dir .. '/bin/Debug/' .. framework .. '/' .. dll_name,
+          }
+        end
+
+        dir = vim.fn.fnamemodify(dir, ':h')
+      end
+
+      return nil
+    end
+
     if not dap.adapters['netcoredbg'] then
-      require('dap').adapters['netcoredbg'] = {
+      dap.adapters['netcoredbg'] = {
         type = 'executable',
-        command = vim.fn.exepath 'netcoredbg',
+        command = get_netcoredbg_path(),
         args = { '--interpreter=vscode' },
         options = {
           detached = false,
         },
       }
     end
+
     for _, lang in ipairs { 'cs', 'fsharp', 'vb' } do
       if not dap.configurations[lang] then
         dap.configurations[lang] = {
           {
             type = 'netcoredbg',
-            name = 'Launch file',
+            name = 'Launch project',
             request = 'launch',
             console = 'integratedTerminal',
-            ---@diagnostic disable-next-line: redundant-parameter
+            cwd = function()
+              local project = find_project()
+              if project then
+                return project.proj_dir
+              end
+              return vim.fn.fnamemodify(vim.fn.expand '%:p:h', ':p')
+            end,
             program = function()
               vim.cmd 'wa'
-              vim.cmd '!dotnet build'
 
-              -- Get current file path
-              local file = vim.fn.expand '%:p'
-              local dir = vim.fn.fnamemodify(file, ':h')
-
-              -- Find nearest .csproj
-              local csproj = ''
-              while dir ~= '' and dir ~= '/' do
-                local matches = vim.fn.globpath(dir, '*.csproj', false, true)
-                if #matches > 0 then
-                  csproj = matches[1]
-                  break
-                end
-                dir = vim.fn.fnamemodify(dir, ':h')
-              end
-              local proj_dir = vim.fn.fnamemodify(csproj, ':h')
-              local dll_name = vim.fn.fnamemodify(csproj, ':t:r') .. '.dll'
-
-              -- Read csproj file
-              local framework = 'net8.0' -- default fallback
-              for line in io.lines(csproj) do
-                local tf = line:match '<TargetFramework>(.*)</TargetFramework>'
-                if tf then
-                  framework = tf
-                  break
-                end
+              local project = find_project()
+              if not project then
+                vim.notify('No .csproj found for this C# file.', vim.log.levels.ERROR)
+                return ''
               end
 
-              return proj_dir .. '/bin/Debug/' .. framework .. '/' .. dll_name
+              vim.cmd('!dotnet build ' .. vim.fn.shellescape(project.csproj))
+              return project.dll
             end,
           },
         }
