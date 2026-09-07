@@ -26,13 +26,9 @@ require('lazy').setup({
 
   require 'kickstart.plugins.trouble',
 
-  require 'kickstart.plugins.neotest',
-
-  require 'kickstart.plugins.neotest-dotnet',
-
   require 'kickstart.plugins.none-ls',
 
-  require 'kickstart.plugins.omnisharp-extended',
+  require 'kickstart.plugins.easy-dotnet',
 
   require 'kickstart.plugins.snippets',
 
