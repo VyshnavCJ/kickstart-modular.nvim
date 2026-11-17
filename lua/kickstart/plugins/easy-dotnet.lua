@@ -9,7 +9,8 @@ return {
   config = function()
     local dotnet_tools = vim.fn.expand '~/.dotnet/tools'
     if vim.fn.isdirectory(dotnet_tools) == 1 and not vim.env.PATH:find(dotnet_tools, 1, true) then
-      vim.env.PATH = dotnet_tools .. ':' .. vim.env.PATH
+      local path_separator = vim.fn.has 'win32' == 1 and ';' or ':'
+      vim.env.PATH = dotnet_tools .. path_separator .. vim.env.PATH
     end
 
     local dotnet_binary = vim.fn.exepath 'dotnet'
@@ -48,7 +49,10 @@ return {
         console = 'externalTerminal',
         auto_register_dap = true,
       },
-      external_terminal = {
+      external_terminal = vim.fn.has 'win32' == 1 and {
+        command = 'wt',
+        args = { '-w', '0', 'nt', '--' },
+      } or {
         command = 'osascript',
         args = {
           '-e',

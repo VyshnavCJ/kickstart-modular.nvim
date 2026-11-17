@@ -49,7 +49,9 @@ vim.keymap.set({ 'n', 'v' }, '<leader>d', [["_d]])
 
 vim.keymap.set('i', '<C-c>', '<Esc>')
 vim.keymap.set('n', 'Q', '<nop>')
-vim.keymap.set('n', '<C-f>', '<cmd>silent !tmux neww ~/.local/share/bin/tmux-sessionizer<CR>')
+if vim.fn.executable 'tmux' == 1 then
+  vim.keymap.set('n', '<C-f>', '<cmd>silent !tmux neww ~/.local/share/bin/tmux-sessionizer<CR>')
+end
 
 vim.keymap.set('n', '<C-k>', '<cmd>cnext<CR>zz')
 vim.keymap.set('n', '<C-j>', '<cmd>cprev<CR>zz')
@@ -57,7 +59,9 @@ vim.keymap.set('n', '<leader>k', '<cmd>lnext<CR>zz')
 vim.keymap.set('n', '<leader>j', '<cmd>lprev<CR>zz')
 
 vim.keymap.set('n', '<leader>s', [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]])
-vim.keymap.set('n', '<leader>x', '<cmd>!chmod +x %<CR>', { silent = true })
+if vim.fn.has 'win32' == 0 then
+  vim.keymap.set('n', '<leader>x', '<cmd>!chmod +x %<CR>', { silent = true })
+end
 
 -- for go errors
 vim.keymap.set('n', '<leader>ee', 'oif err != nil {<CR>}<Esc>Oreturn err<Esc>')

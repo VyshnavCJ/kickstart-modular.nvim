@@ -171,6 +171,24 @@ After installing all the dependencies continue with the [Install Kickstart](#ins
 
 #### Windows Installation
 
+To install Neovim, the external tools used by this configuration, and the
+configuration itself, clone this repository and run the included installer in
+an Administrator PowerShell session:
+
+```powershell
+$archive = Join-Path $env:TEMP 'kickstart-modular.nvim.zip'
+$source = Join-Path $env:TEMP 'kickstart-modular.nvim-source'
+Invoke-WebRequest 'https://github.com/VyshnavCJ/kickstart-modular.nvim/archive/refs/heads/master.zip' -OutFile $archive
+Expand-Archive -Path $archive -DestinationPath $source -Force
+Set-ExecutionPolicy -Scope Process Bypass
+& "$source\kickstart-modular.nvim-master\windows\install.ps1"
+```
+
+The script installs Chocolatey if needed (using `winget`), then installs
+Neovim, Git, ripgrep, fd, MinGW/make, and tree-sitter. It copies the config to
+`$env:LOCALAPPDATA\nvim`; any pre-existing config is backed up before it is
+replaced. Restart PowerShell after installation, then run `nvim`.
+
 <details><summary>Windows with Microsoft C++ Build Tools and CMake</summary>
 Installation may require installing build tools and updating the run command for `telescope-fzf-native`
 
