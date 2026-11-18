@@ -38,6 +38,8 @@ require('lazy').setup({
 
   require 'kickstart.plugins.lazygit',
 
+  require 'kickstart.plugins.lazynuget',
+
   require 'kickstart.plugins.vim-tmux-navigator',
 
   require 'kickstart.plugins.which-key',
